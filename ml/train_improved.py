@@ -61,6 +61,8 @@ def fit_trend(train: pd.DataFrame):
 
 def run(df, train, test, level, detrend, trend):
     X = features(df, level)
+    if level >= 2 and detrend:
+        X["club_strength"] = X["club_strength"] - trend(df.season)
     off_tr = trend(train.season) if detrend else 0.0
     off_te = trend(test.season) if detrend else 0.0
     model = XGBRegressor(
@@ -88,3 +90,4 @@ if __name__ == "__main__":
     imp = pd.Series(m.feature_importances_, index=cols).sort_values(ascending=False)
     print("\nTop features (last model):")
     print(imp.head(10).round(3))
+
