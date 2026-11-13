@@ -1,0 +1,15 @@
+pairs: train 13701 (value season <= 2022) | test 4013 (value season >= 2023)
+
+trees chosen on validation pairs: 228
+
+TEST: forecast of next season's value (value seasons 2023+, scored once)
+                      R2_log  RMSE_log  median_APE_%  within_25%  within_50%
+model                  0.876     0.430        23.570      52.479      82.033
+unchanged (no skill)   0.822     0.514        33.333      44.281      73.486
+
+Rank correlation of predicted vs actual value change: 0.52  (0 = no skill)
+Among players whose value moved >15%: direction (up/down) called right 74% of the time (50% = coin flip)
+
+80% forecast range on test pairs: coverage 82.9% (target 80%), median width 2.80x (high/low)
+
+Saved scoutlens_forecast_point_v1.json, scoutlens_forecast_q10_v1.json, scoutlens_forecast_q90_v1.json and scoutlens_forecast_v1_meta.json

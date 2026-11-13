@@ -8,7 +8,8 @@ Honest-evaluation rules used here:
   * The test seasons (2023+) are scored ONCE, at the end.
   * Feature groups are kept or dropped, and hyperparameters are chosen, using
     validation seasons 2021-2022 only (training on seasons before 2021).
-  * The detrending curve and all category lists are fitted on training rows only.
+  * The detrending curve and all category lists are fitted on training rows only. The market
+    trend is held flat after the last training season (see make_trend).
 
 `--extra` merges any CSV that has `player_id`, `season` and numeric columns
 (for example contract_years_left, caps, xg_p90 from FBref) as one more feature group.
@@ -56,8 +57,17 @@ def fit_trend_coef(train: pd.DataFrame) -> list:
     return [float(c) for c in np.polyfit(med.index.values.astype(float), np.log(med.values), 1)]
 
 
-def make_trend(coef):
-    return lambda s: np.polyval(coef, np.asarray(s, float))
+def make_trend(coef, cutoff=None):
+    """Market trend in log value. Beyond `cutoff` (the last training season) it stays FLAT:
+    extrapolating the 2012-2022 growth upward over-predicted 2023+ values by ~15% (the
+    median player's value stopped rising), and the flat version won on validation seasons."""
+    if cutoff is None:
+        return lambda s: np.polyval(coef, np.asarray(s, float))
+    return lambda s: np.polyval(coef, np.minimum(np.asarray(s, float), cutoff))
+
+
+def cutoff_of(train: pd.DataFrame) -> int:
+    return int(train["season"].max())
 
 
 def load_prepared(extra: str | None = None):
@@ -92,7 +102,7 @@ def split(p, kind: str):
 def fit_eval(p, kind, groups, extra_cols, params=None):
     tr, te = split(p, kind)
     coef = fit_trend_coef(p.loc[tr])
-    trend = make_trend(coef)
+    trend = make_trend(coef, cutoff_of(p.loc[tr]))
     builder = FeatureBuilder().fit(p.loc[tr])
     Xtr, ytr = make_xy(p, tr, builder, trend, groups, extra_cols)
     Xte, _ = make_xy(p, te, builder, trend, groups, extra_cols)
@@ -125,7 +135,7 @@ def ablation(p, extra_cols, log):
 # --------------------------------------------------------------------- tuning
 def tune(p, groups, extra_cols, trials, seed, log):
     tr, va = split(p, "val")
-    trend = make_trend(fit_trend_coef(p.loc[tr]))
+    trend = make_trend(fit_trend_coef(p.loc[tr]), cutoff_of(p.loc[tr]))
     builder = FeatureBuilder().fit(p.loc[tr])
     Xtr, ytr = make_xy(p, tr, builder, trend, groups, extra_cols)
     Xva, yva = make_xy(p, va, builder, trend, groups, extra_cols)
@@ -145,10 +155,10 @@ def tune(p, groups, extra_cols, trials, seed, log):
 
 
 # ------------------------------------------------------------ save / load
-def save_bundle(model, builder, coef, groups, extra_cols, params, metrics, columns):
+def save_bundle(model, builder, coef, groups, extra_cols, params, metrics, columns, cutoff=None):
     MODEL_PATH.parent.mkdir(exist_ok=True)
     model.save_model(str(MODEL_PATH))
-    meta = dict(groups=groups, extra_cols=extra_cols, params=params, trend_coef=coef,
+    meta = dict(groups=groups, extra_cols=extra_cols, params=params, trend_coef=coef, trend_cutoff=cutoff,
                 columns=list(columns), metrics=metrics, trained_before_season=TEST_FROM,
                 builder=dict(leagues=builder.leagues_, subpos=builder.subpos_, foot=builder.foot_,
                              countries=builder.countries_, height_median=builder.height_median_,
@@ -163,7 +173,7 @@ def load_bundle(model_path: Path = MODEL_PATH, meta_path: Path = META_PATH):
     b = FeatureBuilder(meta["builder"]["top_countries"])
     b.leagues_, b.subpos_, b.foot_ = (meta["builder"][k] for k in ("leagues", "subpos", "foot"))
     b.countries_, b.height_median_ = meta["builder"]["countries"], meta["builder"]["height_median"]
-    return model, b, make_trend(meta["trend_coef"]), meta
+    return model, b, make_trend(meta["trend_coef"], meta.get("trend_cutoff")), meta
 
 
 def predict_values(bundle, prepared: pd.DataFrame) -> np.ndarray:
@@ -204,7 +214,8 @@ def main():
 
     tr, te = split(p, "test")
     coef = fit_trend_coef(p.loc[tr])
-    trend = make_trend(coef)
+    cutoff = cutoff_of(p.loc[tr])
+    trend = make_trend(coef, cutoff)
     builder = FeatureBuilder().fit(p.loc[tr])
     Xtr, ytr = make_xy(p, tr, builder, trend, groups, extra_cols)
     Xte, _ = make_xy(p, te, builder, trend, groups, extra_cols)
@@ -231,7 +242,7 @@ def main():
     log("\nTop 12 features of the saved model:")
     log(imp.head(12).round(3).to_string())
 
-    save_bundle(model, builder, coef, groups, extra_cols, final, metrics, Xtr.columns)
+    save_bundle(model, builder, coef, groups, extra_cols, final, metrics, Xtr.columns, cutoff)
     log(f"\nSaved {MODEL_PATH.relative_to(ROOT)} ({MODEL_PATH.stat().st_size / 1e6:.1f} MB) "
         f"and {META_PATH.relative_to(ROOT)}")
 
