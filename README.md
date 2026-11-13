@@ -17,7 +17,7 @@ SHAP, uncertainty ranges, API, and frontend are still to do (see Roadmap).
 | `benchmarks/` | Merge sort timing benchmark |
 | `reports/` | Saved results from the training scripts |
 | `data/processed/` | Cleaned Transfermarkt-based data (27k player-seasons, 2012-2025, 5 leagues) |
-| `models/` | Saved tuned model (`scoutlens_xgb_v2.json`) and its metadata |
+| `models/` | Saved valuation model, 80% range models, and forecast models (with metadata) |
 | `api/`, `frontend/` | Empty, not built yet |
 
 ## Setup
@@ -43,6 +43,8 @@ python -m ml.train_real        # baseline: formula vs XGBoost on real data
 python -m ml.train_improved    # adds inflation adjustment, extra features, club strength
 python -m ml.leakage_check     # tests whether the club_strength gain is real
 python -m ml.train_and_tune    # Phase 2: feature ablation, tuning, saves models/ (about 3 min)
+python -m ml.uncertainty       # Phase 3: ranges (run after train_and_tune)
+python -m ml.forecast          # Phase 3: next-season forecaster (run after train_and_tune)
 ```
 
 All real-data scripts train on seasons before 2023 and test on 2023 onward, so
@@ -68,29 +70,31 @@ previous-season club data.
 ## Phase 2: richer features, tuning, saved model
 
 `ml/feature_engineering.py` adds leakage-safe features (a test proves no market value
-from the season being predicted reaches any feature). `ml/train_and_tune.py` then keeps
-or drops each feature group using **validation seasons 2021-22 only**, tunes XGBoost
-with a random search (early stopping on validation), scores the test seasons **once**,
-and saves the model. Full output: `reports/phase2_results.txt`.
+from the season being predicted reaches any feature). `ml/train_and_tune.py` keeps or
+drops each feature group using **validation seasons 2021-22 only**, tunes XGBoost with a
+random search, scores the test seasons **once**, and saves the model. Full output:
+`reports/phase2_results.txt`.
 
 | Feature group | Test median error | Kept? |
 |---|---|---|
-| base (age, minutes, goals/assists per 90, position, league) | 56% | yes |
-| + extra (appearances, cards, height, sub-position, foot) | 54% | yes |
-| + club strength (previous season) | 38% | yes |
-| + history (last season's output, 2-season rates, club tenure, transfer signals) | 36% | yes |
-| + context (share of club output, peer z-scores) | 36% | no, no validation gain |
-| + nationality (top 15 countries) | 36% | no, no validation gain |
+| base (age, minutes, goals/assists per 90, position, league) | 51% | yes |
+| + extra (appearances, cards, height, sub-position, foot) | 51% | yes |
+| + club strength (previous season) | 35% | yes |
+| + history (last season's output, 2-season rates, club tenure, transfer signals) | 33% | yes |
+| + context (share of club output, peer z-scores) | 33% | no, no validation gain |
+| + nationality (top 15 countries) | 33% | yes |
 
-| Final model (seasons 2023+) | R² (log) | Median error | Within 25% | Within 50% |
+| Final valuation model (seasons 2023+) | R² (log) | Median error | Within 25% | Within 50% |
 |---|---|---|---|---|
-| **Tuned, saved model** | 0.81 | **34%** | 38% | 67% |
-| Same features, untuned | 0.79 | 36% | 37% | 64% |
-| Forecast mode (also uses the player's own last known value) | 0.91 | 22% | 56% | 83% |
+| **Tuned, saved model** | 0.83 | **31%** | 41% | 72% |
+| Same features, untuned | 0.82 | 33% | 39% | 70% |
 
-**Quote 34% as the valuation accuracy.** Forecast mode is a different task: it starts
-from the player's last Transfermarkt value, so it is an anchor, not a from-scratch
-estimate. It is kept for the forecasting phase and is not the saved model.
+**Quote 31% as the valuation accuracy.**
+
+**Market trend fix.** Values are detrended by a market-level trend. Extrapolating the
+2012-2022 growth made the model over-predict 2023+ values by about 15%, because the median
+player's value stopped rising. Holding the trend flat after the last training season won on
+the validation seasons (and on test), cutting median error from 34% to 31%.
 
 **Not done, because the data is not available:** contract years left and national team
 caps (the Kaggle Transfermarkt data only has a current contract snapshot, so it cannot be
@@ -99,6 +103,53 @@ Club tenure is used as a rough contract proxy. When you get any of these as a CS
 `player_id`, `season` and numeric columns, run
 `python -m ml.train_and_tune --extra your_file.csv` and it is tested as one more feature group.
 
+## Phase 3: explanations, ranges, and next-season forecasts
+
+```bash
+python -m ml.explain "Name"        # why the model valued this player that way
+python -m ml.explain --global      # which factors matter most overall
+python -m ml.uncertainty           # train + calibrate + save the 80% range models
+python -m ml.forecast              # train + evaluate + save the next-season forecaster
+python -m ml.forecast "Name"       # next-season forecast for one player
+```
+
+**Explanations (`ml/explain.py`).** Uses XGBoost's built-in TreeSHAP, which gives the same
+numbers as the `shap` library (checked) without version problems. Contributions are
+grouped into plain concepts (Age, Club strength, Playing time, ...) and shown as a percent
+effect on value plus a euro waterfall that sums exactly to the prediction.
+Across 2023+ players the biggest drivers are age, club strength, and playing time.
+
+**Ranges (`ml/uncertainty.py`).** Two XGBoost quantile models (10th and 90th percentile)
+trained before 2021, then widened by conformal calibration on 2021-22 so about 80% of
+players fall inside. Checked on the untouched 2023+ seasons:
+
+| | Coverage (target 80%) | Typical range width (high / low) |
+|---|---|---|
+| Raw quantile models | 78% | 4.7x |
+| **Calibrated (saved)** | **81%** | 5.1x |
+
+The range is wide because the model's typical error is 31%. It is weakest for players the
+model values under EUR 2M (64% coverage), La Liga (76%) and players with under 900 minutes
+(77%); it is a little too wide for EUR 10-30M players (88%). Re-calibrate on the newest
+seasons whenever new data is added.
+
+**Forecasts (`ml/forecast.py`).** Predicts a player's value one season ahead from his
+current value, stats, history and club. Trained only on pairs whose next season is before
+2023, then scored once on 2023+:
+
+| Next-season value | R² (log) | Median error | Within 25% | Within 50% |
+|---|---|---|---|---|
+| **Forecast model** | 0.88 | **24%** | 52% | 82% |
+| No-skill baseline (value stays the same) | 0.82 | 33% | 44% | 73% |
+
+It ranks who will rise and who will fall (rank correlation 0.52) and gets the direction
+right for 74% of players whose value moves more than 15%. Its 80% range covered 83% of
+players (median width 2.8x).
+
+**Known limitation.** The from-scratch valuation compresses superstar values: for a player
+worth EUR 200M it predicts about EUR 135M, and the real value falls outside its range. The
+forecast starts from the player's current value, so it does not have this problem.
+
 ## Roadmap
 
 - [x] Real data pipeline and cleaning
@@ -106,8 +157,7 @@ Club tenure is used as a rough contract proxy. When you get any of these as a CS
 - [x] Heap, trie, merge sort with tests
 - [x] Leakage check on club strength
 - [x] Leakage-safe feature engineering, validated feature selection, tuned model saved to `models/`
+- [x] SHAP explanations, 80% prediction ranges, next-season forecasts
 - [ ] Contract length, national team caps, xG/passes/tackles (needs new data, see Phase 2)
-- [ ] SHAP explanations
-- [ ] Prediction ranges (uncertainty)
 - [ ] API (FastAPI) using the trie for search and `top_k` for rankings
 - [ ] Frontend

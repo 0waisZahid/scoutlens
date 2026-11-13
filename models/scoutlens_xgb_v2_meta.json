@@ -3,23 +3,25 @@
     "base",
     "extra",
     "club",
-    "history"
+    "history",
+    "nationality"
   ],
   "extra_cols": [],
   "params": {
     "max_depth": 4,
-    "learning_rate": 0.05,
-    "min_child_weight": 20,
-    "subsample": 0.8,
-    "colsample_bytree": 0.9,
-    "reg_lambda": 3.0,
-    "reg_alpha": 1.0,
-    "n_estimators": 1112
+    "learning_rate": 0.02,
+    "min_child_weight": 5,
+    "subsample": 0.7,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 10.0,
+    "reg_alpha": 0.0,
+    "n_estimators": 1798
   },
   "trend_coef": [
     0.10298224111711228,
     -192.39023418897213
   ],
+  "trend_cutoff": 2022,
   "columns": [
     "age",
     "age_sq",
@@ -67,14 +69,29 @@
     "tenure",
     "club_changed",
     "new_signing",
-    "move_delta"
+    "move_delta",
+    "nat_Spain",
+    "nat_France",
+    "nat_Italy",
+    "nat_Germany",
+    "nat_England",
+    "nat_Brazil",
+    "nat_Argentina",
+    "nat_Portugal",
+    "nat_Senegal",
+    "nat_Netherlands",
+    "nat_Belgium",
+    "nat_Serbia",
+    "nat_Cote d'Ivoire",
+    "nat_Switzerland",
+    "nat_Croatia"
   ],
   "metrics": {
-    "R2_log": 0.8059846537522388,
-    "RMSE_log": 0.5424196181152593,
-    "median_APE_%": 34.13378745614767,
-    "within_25%": 38.25410544511668,
-    "within_50%": 66.68971477960241
+    "R2_log": 0.8272801149169617,
+    "RMSE_log": 0.5117861363551134,
+    "median_APE_%": 31.209774631294035,
+    "within_25%": 41.01987899740709,
+    "within_50%": 72.44598098530682
   },
   "trained_before_season": 2023,
   "builder": {
