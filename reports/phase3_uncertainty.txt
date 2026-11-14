@@ -1,0 +1,36 @@
+quantile models trained on seasons < 2021 (17514 rows); calibrated on 2021-2022 (3987); tested on 2023+ (5785)
+
+Calibration: raw range covered 77.1% of 2021-22 players (target 80%); conformal widening = +0.043 log units each side
+
+TEST seasons 2023+ (never used to fit or calibrate):
+                    coverage_%  median_hi/lo
+raw quantile range       78.32          4.69
+calibrated range         80.73          5.10
+
+Final intervals around the saved point model: coverage 80.9%, median width 5.11x (high/low)
+
+Coverage by group (calibrated range, test seasons):
+                         coverage_%  median_hi/lo       n
+ALL                           80.73          5.10  5785.0
+position: DF                  81.10          5.19  2154.0
+position: FW                  81.38          4.95  1504.0
+position: GK                  79.33          5.67   421.0
+position: MF                  80.01          4.95  1706.0
+league: ES1                   76.09          5.21  1242.0
+league: FR1                   80.00          5.12  1060.0
+league: GB1                   85.29          4.44  1183.0
+league: IT1                   81.85          5.46  1256.0
+league: L1                    80.46          5.22  1044.0
+minutes: 900-1800             80.54          5.02  2127.0
+minutes: <900                 76.92          5.84  1079.0
+minutes: >1800                82.47          4.92  2579.0
+predicted value: 10-30M       87.53          4.92  1636.0
+predicted value: 2-10M        80.48          5.47  3002.0
+predicted value: <2M          63.88          5.16   551.0
+predicted value: >30M         78.86          3.92   596.0
+
+Note: if coverage lands under the 80% target, market values drifted between the calibration
+seasons (2021-22) and the test seasons (2023+). Re-calibrate on the newest seasons whenever
+new data is added. Per-league calibration was tried and did not help.
+
+Saved models/scoutlens_q10_v2.json, scoutlens_q90_v2.json, scoutlens_quantile_v2_meta.json. Reload check passed.
