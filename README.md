@@ -3,8 +3,8 @@
 Football player analytics and market-intelligence platform: performance stats,
 ML-based valuation, forecasting with uncertainty, and SHAP explainability.
 
-**Status:** valuation model (tuned and saved) and core data structures are built and tested.
-SHAP, uncertainty ranges, API, and frontend are still to do (see Roadmap).
+**Status:** data pipeline, valuation model, ranges, forecasts, SHAP explanations, REST API and web
+frontend are built and tested. Remaining work needs new data (see Roadmap).
 
 ## What's in the repo
 
@@ -18,7 +18,8 @@ SHAP, uncertainty ranges, API, and frontend are still to do (see Roadmap).
 | `reports/` | Saved results from the training scripts |
 | `data/processed/` | Cleaned Transfermarkt-based data (27k player-seasons, 2012-2025, 5 leagues) |
 | `models/` | Saved valuation model, 80% range models, and forecast models (with metadata) |
-| `api/`, `frontend/` | Empty, not built yet |
+| `api/` | FastAPI app: search, profiles, valuation + range + explanation + forecast, rankings, similar players, teammate graph |
+| `frontend/` | React + TypeScript (Vite) web app: board, player pages, compare, connections, watchlist, method |
 
 ## Setup
 
@@ -150,6 +151,44 @@ players (median width 2.8x).
 worth EUR 200M it predicts about EUR 135M, and the real value falls outside its range. The
 forecast starts from the player's current value, so it does not have this problem.
 
+## Running the app
+
+Two terminals, both from the repo root.
+
+```bash
+# 1. API (builds the models and feature tables in the background at start-up, about 5 s)
+uvicorn api.main:app --reload            # docs at http://127.0.0.1:8000/docs
+
+# 2. Frontend (needs Node 18+)
+cd frontend
+npm install
+npm run dev                              # http://localhost:5173
+```
+
+The frontend calls `http://127.0.0.1:8000` by default; set `VITE_API_URL` in `frontend/.env` to change it
+(see `.env.example`). `npm run build` type-checks and produces `frontend/dist`.
+
+**API endpoints**
+
+| Endpoint | What it returns | Built on |
+|---|---|---|
+| `GET /players/search?q=` | Autocomplete, most valuable first | `core.trie`, `core.heap.top_k` |
+| `GET /players/{id}` | Profile, season stats, value history, trend, position percentiles | `core.timeseries` |
+| `GET /players/{id}/valuation?season=` | Model value, 80% range, factor breakdown, next-season forecast (with the actual value when it exists) | `ml.*` |
+| `GET /players/{id}/similar` | Nearest players by profile | `core.similarity` |
+| `GET /players/{id}/teammates`, `GET /connections?a=&b=` | Teammates and shortest teammate chain | `core.graph` (BFS) |
+| `GET /rankings?sort=...` | Top players by value, model gap, forecast or stats, with filters | `core.heap.top_k` |
+| `GET /model/info`, `GET /meta` | Accuracy, data coverage, global importance, filter options | model metadata |
+
+`undervalued`, `overvalued`, `risers` and `fallers` only rank players valued EUR 2M-100M (EUR 1M+ for
+forecasts), where the model is most reliable (see the limitations in Phase 3). Override with
+`min_value` / `max_value`.
+
+**Club names.** `data/processed/clubs.csv` maps the clubs in the processed player data to names, so
+the UI can show club names instead of IDs. The mapping is sourced from the
+[Transfermarkt datasets project](https://github.com/dcaribou/transfermarkt-datasets) (CC0 1.0).
+Refresh the mapping if you replace the player data with data containing different club IDs.
+
 ## Roadmap
 
 - [x] Real data pipeline and cleaning
@@ -159,5 +198,7 @@ forecast starts from the player's current value, so it does not have this proble
 - [x] Leakage-safe feature engineering, validated feature selection, tuned model saved to `models/`
 - [x] SHAP explanations, 80% prediction ranges, next-season forecasts
 - [ ] Contract length, national team caps, xG/passes/tackles (needs new data, see Phase 2)
-- [ ] API (FastAPI) using the trie for search and `top_k` for rankings
-- [ ] Frontend
+- [x] API (FastAPI) using the trie for search and `top_k` for rankings
+- [x] Frontend (React + TypeScript)
+- [x] Club names
+- [ ] A database instead of in-memory data
