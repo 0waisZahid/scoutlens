@@ -324,16 +324,23 @@ if (DIST / "index.html").is_file():
 
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
 
-    @app.get("/{path:path}", include_in_schema=False)
-    def spa(path: str) -> FileResponse:
-        """Any other URL is a page of the single-page app (client-side routing)."""
-        if "\x00" in path:                      # a null byte makes pathlib raise ValueError (was a 500)
-            raise HTTPException(status_code=404, detail="Not Found")
-        try:
-            f = (DIST / path).resolve()
-            is_file = path and f.is_file() and DIST.resolve() in f.parents
-        except (ValueError, OSError):
-            raise HTTPException(status_code=404, detail="Not Found") from None
-        if is_file:
-            return FileResponse(f)
-        return FileResponse(DIST / "index.html")
+
+@app.get("/{path:path}", include_in_schema=False)
+def spa(path: str) -> FileResponse:
+    """Any other URL is a page of the single-page app (client-side routing)."""
+    from fastapi.responses import FileResponse
+
+    if "\x00" in path:                      # a null byte makes pathlib raise ValueError (was a 500)
+        raise HTTPException(status_code=404, detail="Not Found")
+    try:
+        dist = DIST.resolve()
+        index = dist / "index.html"
+        f = (dist / path).resolve()
+        is_file = path and f.is_file() and dist in f.parents
+    except (ValueError, OSError):
+        raise HTTPException(status_code=404, detail="Not Found") from None
+    if not index.is_file():
+        raise HTTPException(status_code=404, detail="Not Found")
+    if is_file:
+        return FileResponse(f)
+    return FileResponse(index)
