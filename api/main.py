@@ -16,7 +16,7 @@ from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException, Path as ApiPath, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from api.service import SORTS, Analytics
@@ -319,7 +319,6 @@ def model_info(svc: Analytics = Depends(get_analytics)) -> dict:
 # --- production: serve the built frontend from the same service (no CORS, one URL) -------------
 DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 if (DIST / "index.html").is_file():
-    from fastapi.responses import FileResponse
     from fastapi.staticfiles import StaticFiles
 
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
@@ -328,8 +327,6 @@ if (DIST / "index.html").is_file():
 @app.get("/{path:path}", include_in_schema=False)
 def spa(path: str) -> FileResponse:
     """Any other URL is a page of the single-page app (client-side routing)."""
-    from fastapi.responses import FileResponse
-
     if "\x00" in path:                      # a null byte makes pathlib raise ValueError (was a 500)
         raise HTTPException(status_code=404, detail="Not Found")
     try:
