@@ -1,0 +1,64 @@
+train: 21501 rows | validation seasons 2021-2022 | test seasons 2023+ (5785 rows)
+
+Feature-group ablation (kept/dropped decided on VALIDATION only; test shown for reference):
+              val_RMSE val_medAPE% test_RMSE test_medAPE% test_within25%                   kept
++base         0.797542   52.698306  0.801426    51.397958      24.286949                    yes
++extra        0.791757   52.079467  0.789915     50.96676      24.632671                    yes
++club         0.562806   34.738757  0.556771    35.072603      36.836646                    yes
++history      0.524273   32.419576   0.52968    33.148635      39.066551                    yes
++context      0.526925   32.932688   0.52688     32.98639      38.962835  NO (val gain < 0.002)
++nationality  0.521232    32.44021  0.528973    33.081556      38.738116                    yes
+
+Groups kept: ['base', 'extra', 'club', 'history', 'nationality']
+
+Tuning (25 random trials, validation seasons only):
+  trial  1/25  val RMSE_log 0.5060  trees  570  {'max_depth': 7, 'learning_rate': 0.03, 'min_child_weight': 5, 'subsample': 0.7, 'colsample_bytree': 0.6, 'reg_lambda': 0.5, 'reg_alpha': 0.0}
+  trial  2/25  val RMSE_log 0.5044  trees 1999  {'max_depth': 3, 'learning_rate': 0.02, 'min_child_weight': 20, 'subsample': 0.8, 'colsample_bytree': 0.9, 'reg_lambda': 3.0, 'reg_alpha': 0.1}
+  trial  3/25  val RMSE_log 0.5052  trees  470  {'max_depth': 7, 'learning_rate': 0.05, 'min_child_weight': 10, 'subsample': 0.8, 'colsample_bytree': 0.7, 'reg_lambda': 10.0, 'reg_alpha': 0.0}
+  trial  4/25  val RMSE_log 0.5069  trees  355  {'max_depth': 7, 'learning_rate': 0.05, 'min_child_weight': 1, 'subsample': 0.7, 'colsample_bytree': 0.9, 'reg_lambda': 3.0, 'reg_alpha': 0.0}
+  trial  5/25  val RMSE_log 0.5024  trees  570  {'max_depth': 6, 'learning_rate': 0.05, 'min_child_weight': 20, 'subsample': 0.6, 'colsample_bytree': 0.5, 'reg_lambda': 10.0, 'reg_alpha': 0.0}
+  trial  6/25  val RMSE_log 0.5031  trees 1063  {'max_depth': 5, 'learning_rate': 0.02, 'min_child_weight': 3, 'subsample': 0.7, 'colsample_bytree': 0.7, 'reg_lambda': 1.0, 'reg_alpha': 0.0}
+  trial  7/25  val RMSE_log 0.5045  trees 2000  {'max_depth': 3, 'learning_rate': 0.02, 'min_child_weight': 1, 'subsample': 0.8, 'colsample_bytree': 0.7, 'reg_lambda': 3.0, 'reg_alpha': 0.0}
+  trial  8/25  val RMSE_log 0.5021  trees  447  {'max_depth': 6, 'learning_rate': 0.05, 'min_child_weight': 3, 'subsample': 0.7, 'colsample_bytree': 0.9, 'reg_lambda': 10.0, 'reg_alpha': 1.0}
+  trial  9/25  val RMSE_log 0.5007  trees  824  {'max_depth': 4, 'learning_rate': 0.05, 'min_child_weight': 20, 'subsample': 0.8, 'colsample_bytree': 0.9, 'reg_lambda': 3.0, 'reg_alpha': 1.0}
+  trial 10/25  val RMSE_log 0.5003  trees  719  {'max_depth': 4, 'learning_rate': 0.05, 'min_child_weight': 1, 'subsample': 0.8, 'colsample_bytree': 0.8, 'reg_lambda': 10.0, 'reg_alpha': 0.1}
+  trial 11/25  val RMSE_log 0.4998  trees 1635  {'max_depth': 4, 'learning_rate': 0.02, 'min_child_weight': 5, 'subsample': 0.7, 'colsample_bytree': 0.8, 'reg_lambda': 10.0, 'reg_alpha': 0.0}
+  trial 12/25  val RMSE_log 0.5060  trees  535  {'max_depth': 7, 'learning_rate': 0.03, 'min_child_weight': 3, 'subsample': 0.8, 'colsample_bytree': 0.7, 'reg_lambda': 1.0, 'reg_alpha': 0.0}
+  trial 13/25  val RMSE_log 0.5027  trees  976  {'max_depth': 6, 'learning_rate': 0.03, 'min_child_weight': 5, 'subsample': 0.7, 'colsample_bytree': 0.8, 'reg_lambda': 1.0, 'reg_alpha': 0.0}
+  trial 14/25  val RMSE_log 0.5053  trees  958  {'max_depth': 7, 'learning_rate': 0.02, 'min_child_weight': 3, 'subsample': 0.8, 'colsample_bytree': 0.8, 'reg_lambda': 0.5, 'reg_alpha': 0.0}
+  trial 15/25  val RMSE_log 0.5045  trees  835  {'max_depth': 4, 'learning_rate': 0.05, 'min_child_weight': 5, 'subsample': 0.9, 'colsample_bytree': 0.6, 'reg_lambda': 0.5, 'reg_alpha': 1.0}
+  trial 16/25  val RMSE_log 0.5055  trees  860  {'max_depth': 7, 'learning_rate': 0.02, 'min_child_weight': 1, 'subsample': 0.8, 'colsample_bytree': 0.6, 'reg_lambda': 3.0, 'reg_alpha': 0.0}
+  trial 17/25  val RMSE_log 0.5066  trees  665  {'max_depth': 7, 'learning_rate': 0.03, 'min_child_weight': 20, 'subsample': 0.9, 'colsample_bytree': 0.8, 'reg_lambda': 0.5, 'reg_alpha': 1.0}
+  trial 18/25  val RMSE_log 0.5041  trees 1870  {'max_depth': 3, 'learning_rate': 0.03, 'min_child_weight': 5, 'subsample': 0.9, 'colsample_bytree': 0.5, 'reg_lambda': 10.0, 'reg_alpha': 0.0}
+  trial 19/25  val RMSE_log 0.5023  trees  795  {'max_depth': 6, 'learning_rate': 0.03, 'min_child_weight': 20, 'subsample': 0.7, 'colsample_bytree': 0.9, 'reg_lambda': 3.0, 'reg_alpha': 1.0}
+  trial 20/25  val RMSE_log 0.5036  trees  992  {'max_depth': 3, 'learning_rate': 0.05, 'min_child_weight': 20, 'subsample': 0.6, 'colsample_bytree': 0.6, 'reg_lambda': 3.0, 'reg_alpha': 0.0}
+  trial 21/25  val RMSE_log 0.5044  trees 1089  {'max_depth': 5, 'learning_rate': 0.03, 'min_child_weight': 10, 'subsample': 0.9, 'colsample_bytree': 0.7, 'reg_lambda': 1.0, 'reg_alpha': 0.1}
+  trial 22/25  val RMSE_log 0.5024  trees  862  {'max_depth': 7, 'learning_rate': 0.02, 'min_child_weight': 5, 'subsample': 0.6, 'colsample_bytree': 0.7, 'reg_lambda': 10.0, 'reg_alpha': 0.1}
+  trial 23/25  val RMSE_log 0.5051  trees  890  {'max_depth': 4, 'learning_rate': 0.05, 'min_child_weight': 10, 'subsample': 0.9, 'colsample_bytree': 0.5, 'reg_lambda': 1.0, 'reg_alpha': 1.0}
+  trial 24/25  val RMSE_log 0.5019  trees  858  {'max_depth': 6, 'learning_rate': 0.03, 'min_child_weight': 5, 'subsample': 0.7, 'colsample_bytree': 0.7, 'reg_lambda': 0.5, 'reg_alpha': 1.0}
+  trial 25/25  val RMSE_log 0.5001  trees 1907  {'max_depth': 3, 'learning_rate': 0.03, 'min_child_weight': 3, 'subsample': 0.8, 'colsample_bytree': 0.8, 'reg_lambda': 3.0, 'reg_alpha': 1.0}
+
+Best validation RMSE_log 0.4998 (default params: 0.5212)
+
+FINAL held-out test results (seasons 2023+, scored once):
+                                     R2_log  RMSE_log  median_APE_%  within_25%  within_50%
+tuned (SAVED MODEL)                   0.827     0.512        31.210      41.020      72.446
+untuned, same groups                  0.815     0.529        33.082      38.738      70.095
+forecast mode (uses own last value)   0.913     0.364        20.142      59.222      87.640
+
+Top 12 features of the saved model:
+club_strength_lag    0.161
+age                  0.095
+lg_GB1               0.093
+minutes_k            0.069
+goals_p90            0.044
+club_rel_league      0.043
+roll_goals_p90       0.040
+age_sq               0.036
+lg_FR1               0.032
+roll_assists_p90     0.029
+prev_minutes_k       0.028
+appearances          0.028
+
+Saved models/scoutlens_xgb_v2.json (3.5 MB) and models/scoutlens_xgb_v2_meta.json
+Reload check passed: saved model reproduces the test predictions.

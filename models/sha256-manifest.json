@@ -1,0 +1,11 @@
+{
+  "scoutlens_forecast_point_v1.json": "b066bb06712f4daf5b628840c8d45cfe24995f013a9afa01442a0907c49258ae",
+  "scoutlens_forecast_q10_v1.json": "b5bc12fc5fc9e436f1ca2324e1312b024ec051232f9213b1effc0c4b24e0a8fa",
+  "scoutlens_forecast_q90_v1.json": "b8563eeb7d79b94d64de92813b101866c1955b9f1e9d482b1a8dd194f92a311f",
+  "scoutlens_forecast_v1_meta.json": "7c466792582efa800440b3560ce7b828f3ac1ea3cd590d371fabfb76604dc81d",
+  "scoutlens_q10_v2.json": "29585fd068064efcbb58f394c255db48a8c7ec0a98a5669420b4f68e19f754f0",
+  "scoutlens_q90_v2.json": "e8b60fa13bb886202e06f5b3f3b57b53e9a4e0545aa7d0554c3e96a8e18ece78",
+  "scoutlens_quantile_v2_meta.json": "446e205f9700abaa0cb114a3fbb0e67cf7f4cf510c5e8b3a4c8f5d38202fc67f",
+  "scoutlens_xgb_v2.json": "3be15a0b6ad8e2446c8b00ca4c76f7aaca70e8e77de534ac41bf1322648b8148",
+  "scoutlens_xgb_v2_meta.json": "9c90c43f48ce1d986eb4fe0549f75a1722438e270081632206ff2718fbdb2c28"
+}

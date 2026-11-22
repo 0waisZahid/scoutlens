@@ -1,0 +1,24 @@
+﻿train: 21501 rows (seasons 2012-2022)
+test:  5785 rows (seasons 2023-2025)
+
+Held-out (future seasons) results:
+              R2_log  RMSE_log  median_APE_%  within_25%  within_50%
+naive_median  -0.171     1.333        75.000      15.281      32.360
+formula        0.510     0.862        56.665      21.746      44.114
+xgboost        0.580     0.798        50.160      24.149      49.870
+blend          0.574     0.804        52.680      23.215      47.364
+
+What the formula believes (top effects):
+               pct_change_per_unit
+minutes_k                     73.3
+pos_FW                        68.5
+lg_FR1                       -64.0
+lg_IT1                       -48.9
+lg_L1                        -48.8
+lg_ES1                       -45.3
+pos_MF                        42.5
+perf_score                    22.6
+z_goals_p90                   15.6
+season                        10.3
+z_assists_p90                 10.3
+age                           -7.7

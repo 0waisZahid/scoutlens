@@ -1,0 +1,21 @@
+﻿train: 21501 rows | test: 5785 rows (seasons 2023+)
+
+Held-out (future seasons) results:
+                 R2_log  RMSE_log  median_APE_%  within_25%  within_50%
+xgb_basic         0.435     0.925        53.092      20.933      46.482
++inflation_adj    0.536     0.839        56.214      22.627      44.736
++extra_features   0.547     0.828        54.609      22.299      45.704
++club_strength    0.825     0.514        32.353      39.810      70.199
+
+Top features (last model):
+club_strength     0.360
+age               0.127
+minutes_k         0.081
+goals_p90         0.066
+lg_GB1            0.057
+age_sq            0.052
+appearances       0.044
+assists_p90       0.031
+pos_DF            0.021
+sub_Right-Back    0.020
+dtype: float32
